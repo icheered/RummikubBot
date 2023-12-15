@@ -109,20 +109,35 @@ impl Inventory {
     }
 }
 
-fn grab_tile(bag: &mut Inventory, player: &mut Inventory) {
+fn grab_tile(source: &mut Inventory, destination: &mut Inventory) {
     let mut rng = rand::thread_rng();
-    let mut color = rng.gen_range(0..4);
-    let mut number = rng.gen_range(1..14);
 
-    // Check if the tile is already on the board
-    while player.grid[number as usize - 1][color as usize] == 1 {
-        color = rng.gen_range(0..4);
-        number = rng.gen_range(1..14);
+    // Calculate the total number of tiles in the source inventory
+    let total_tiles =
+        source.grid.iter().flat_map(|row| row.iter()).sum::<u8>() as f64 + source.jokers as f64;
+
+    // Decide whether to grab a joker based on the proportion of jokers to total tiles
+    let grab_joker = source.jokers > 0 && rng.gen_bool(source.jokers as f64 / total_tiles);
+
+    if grab_joker {
+        // Grab a joker
+        source.jokers -= 1;
+        destination.jokers += 1;
+    } else {
+        // Grab a regular tile
+        let mut color = rng.gen_range(0..4);
+        let mut number = rng.gen_range(1..14);
+
+        // Ensure the selected tile is available in the source inventory
+        while source.grid[number as usize - 1][color as usize] == 0 {
+            color = rng.gen_range(0..4);
+            number = rng.gen_range(1..14);
+        }
+
+        // Move the tile from the source to the destination inventory
+        source.grid[number as usize - 1][color as usize] -= 1;
+        destination.grid[number as usize - 1][color as usize] += 1;
     }
-
-    // Place the tile on the board
-    player.grid[number as usize - 1][color as usize] = 1;
-    bag.grid[number as usize - 1][color as usize] = 1;
 }
 
 fn try_form_set(inventory: &Inventory, number: u8) -> Option<Set> {
