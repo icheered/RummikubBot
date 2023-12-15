@@ -61,7 +61,7 @@ impl Inventory {
     fn new(num: u8) -> Inventory {
         Inventory {
             grid: [[num; 4]; 13],
-            jokers: 0,
+            jokers: num,
         }
     }
 
@@ -235,13 +235,11 @@ pub fn solve() -> Result<(), Report> {
     let mut player = Inventory::new(0);
     let mut bag = Inventory::new(2);
 
-    let mut found_solution = false;
-    while !found_solution {
+    loop {
         grab_tile(&mut player, &mut bag);
         let solution = solve_rummikub(&player, &mut memo);
         match solution {
             Some(sets) => {
-                found_solution = true;
                 let num_tiles = player
                     .grid
                     .iter()
